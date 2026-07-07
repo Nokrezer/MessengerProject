@@ -1,0 +1,5 @@
+venv/
+certificates/
+usersData/
+chatsData/
+start_server.sh
