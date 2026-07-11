@@ -17,22 +17,14 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const globalStyles = useGlobalStyles();
-
-  const {loading:loadingData, userLogged} = useLoadUserData();
-  
-  if(loadingData)
-    return <Text>Загрузка</Text>;
   
   return (
     <SafeAreaProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack
-          screenOptions={{
-          headerShown: true,
-          }}>
-        {userLogged ? <Stack.Screen name="(tabs)" options={{ headerShown: false }} /> :
-        <Stack.Screen name="(forms)" options={{ headerShown: false }} />}
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(forms)" options={{ headerShown: false }} />
         </Stack>
         <StatusBar style="auto" />
                 

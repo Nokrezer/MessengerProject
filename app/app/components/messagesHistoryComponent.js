@@ -10,7 +10,7 @@ import { useAudioPlayer } from "expo-audio";
 //иконки
 import Entypo from '@expo/vector-icons/Entypo';
 //прочее
-import { MessagesTypes } from "@/src/shared/messagesTypes";
+import { MessagesTypes } from "@/src/shared/types";
 
 export function MessagesComponent({messagesDict, chatId}){
     try{

@@ -22,9 +22,8 @@ class ChatService():
     async def _create_private_chat(self, sender_id, reader_id):
         chat_id = uuid.uuid4().hex
         
-        await self.chat_database.create_chat(sender_id=sender_id,
+        await self.chat_database.create_private_chat(sender_id=sender_id,
                                             reader_id=reader_id,
-                                            chat_type=ChatTypes.PRIVATE,
                                             chat_id=chat_id)
         
         return chat_id
@@ -83,3 +82,17 @@ class ChatService():
             return await self.avatar_service.get_user_image(image_name, second_user_id)
         elif chat_type == ChatTypes.GROUP:
             pass
+
+    async def create_group_chat(self, user_id):
+        chat_id = uuid.uuid4().hex
+        await self.chat_database.create_group_chat(user_id, chat_id)
+
+        return chat_id
+    
+    async def add_members(self, raw_users_ids, chat_id):
+        users_ids = []
+        for user_id in raw_users_ids.split(" "):
+            users_ids.append(chat_id)
+            users_ids.append(user_id)
+
+        await self.chat_database.add_members(users_ids)

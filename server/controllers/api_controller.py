@@ -204,3 +204,19 @@ class ApiController():
             return Response(content=image_bytes, media_type="image/jpeg")
         except Exception as e:
             raise HTTPException(detail=str(e), status_code=400)
+        
+    async def create_group_chat(self, request:Request):
+        try:
+            chat_id = await self.chat_service.create_group_chat(request.state.user_id)
+            return {"chat_id":chat_id}
+        except Exception as e:
+            raise HTTPException(detail=str(e), status_code=400)
+        
+    async def add_members(self, request:Request):
+        try:
+            form_data = await request.form()
+            await self.chat_service.add_members(form_data.get("users_ids"), form_data.get("chat_id"))
+            return SuccessResponse()
+        except Exception as e:
+            raise HTTPException(detail=str(e), status_code=400)
+        

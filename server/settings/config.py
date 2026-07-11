@@ -1,6 +1,6 @@
 from os import getenv
 
-SERVER_IP = "0.0.0.0"
+SERVER_IP = "192.168.31.168"
 SERVER_PORT = 8000
 REALTIME_PORT = 8010
 #sql
@@ -21,9 +21,9 @@ AUTH_CODE_MINUTES = 5
 
 HASH_ITERATIONS = 500_000
 
-CERT = "../certificates/cert.pem"
-CERT_KEY = "../certificates/cert_key.pem"
-USE_CERTS = False#Если false сертификаты не используются
+CERT = "../certs/fullchain.pem"
+CERT_KEY = "../certs/privkey.pem"
+USE_CERTS = True#Если false сертификаты не используются
 
 SALT_SIZE = 16
 

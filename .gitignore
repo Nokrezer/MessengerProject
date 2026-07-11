@@ -1,5 +1,5 @@
 venv/
-certificates/
+certs/
 usersData/
 chatsData/
 start_server.sh

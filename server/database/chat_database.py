@@ -1,3 +1,5 @@
+from shared.types import *
+
 class ChatDatabase():
     def __init__(self, database):
         self.database = database
@@ -11,19 +13,20 @@ class ChatDatabase():
     async def get_user_chats(self, user_id):
         return await self.database.get_data("""
                                             SELECT chats.chat_id, chats.chat_type,
-                                            CASE
-                                                WHEN chats.chat_type = "private" THEN users.name
-                                                WHEN chats.chat_type = "group" THEN chats.title
-                                            END AS title,
-                                            CASE
-                                                WHEN chats.chat_type = "private" THEN users.image_name
-                                                WHEN chats.chat_type = "group" THEN chats.chat_image
-                                            END AS chat_image
+                                            COALESCE(
+                                                CASE WHEN chats.chat_type = %s THEN users.name END,
+                                                chats.title
+                                            ) AS title,
+                                            COALESCE(
+                                                CASE WHEN chats.chat_type = %s THEN users.image_name END,
+                                                chats.chat_image
+                                            ) AS chat_image
                                             
                                             FROM chats_members
                                             JOIN chats ON chats_members.chat_id = chats.chat_id
                                             LEFT JOIN users ON users.user_id = chats_members.user_id
-                                            WHERE chats_members.chat_id = chats.chat_id AND NOT chats_members.user_id = %s""", user_id, fetchall=True)
+                                            WHERE chats_members.chat_id = chats.chat_id AND NOT chats_members.user_id = %s""", 
+                                            ChatTypes.PRIVATE, ChatTypes.GROUP, user_id, fetchall=True)
     
     #Функция для поиска чата, в котором уже состоят участники
     async def get_chat_by_members(self, member_id_1, member_id_2):
@@ -36,9 +39,9 @@ class ChatDatabase():
                                             ON cm1.chat_id = chats.chat_id
                                             WHERE cm1.user_id = %s
                                             AND cm2.user_id = %s
-                                            AND chats.chat_type = 'private';""", member_id_1, member_id_2)
+                                            AND chats.chat_type = %s;""", member_id_1, member_id_2, ChatTypes.PRIVATE)
     
-    async def create_chat(self, sender_id, reader_id, chat_id, chat_type):
+    async def create_private_chat(self, sender_id, reader_id, chat_id):
         await self.database.create("""
                                    INSERT INTO chats(chat_id, chat_type)
                                    VALUES (%s, %s);
@@ -46,7 +49,7 @@ class ChatDatabase():
                                    VALUES(%s, %s);
                                    INSERT INTO chats_members(user_id, chat_id)
                                    VALUES(%s, %s);
-                                   """, chat_id, chat_type, sender_id, chat_id, reader_id, chat_id)
+                                   """, chat_id, ChatTypes.PRIVATE, sender_id, chat_id, reader_id, chat_id)
     
     async def get_chat_data(self, chat_id):
         return await self.database.get_data("""SELECT chats.chat_type, chats.title,
@@ -75,3 +78,15 @@ class ChatDatabase():
     async def check_user_access_to_chat(self, user_id, chat_id):
         return await self.database.get_data("""SELECT chat_id FROM chats_members
                                        WHERE chat_id = %s AND user_id = %s""", chat_id, user_id)
+    
+    async def create_group_chat(self, user_id, chat_id):
+        await self.database.create("""INSERT INTO chats(chat_id, chat_type)
+                                   VALUES(%s, %s);
+                                   INSERT INTO chats_members(chat_id, user_id)
+                                   VALUES(%s, %s)""", chat_id, ChatTypes.GROUP, chat_id, user_id)
+        
+    async def add_members(self, users_ids):
+        values = ",".join(["(%s, %s)"] * (len(users_ids)//2))
+        
+        await self.database.create(f"""INSERT INTO chats_members(chat_id, user_id)
+                                   VALUES {values}""", *users_ids)

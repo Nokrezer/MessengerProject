@@ -1,5 +1,5 @@
-const siteIp = "0.0.0.0:8000";
-export const apiUrl = `http://${siteIp}/`;
+const siteIp = "nokrezer.messenger.mooo.com:8000";
+export const apiUrl = `https://${siteIp}/`;
 export const websocketUrl = `ws://${siteIp}/ws`;
 const prefixApi = apiUrl + "api/";
 const prefixAuth = apiUrl + "auth/";

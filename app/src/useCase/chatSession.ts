@@ -12,6 +12,8 @@ import { fromUint8Array, toUint8Array } from "js-base64";
 
 import nacl from "tweetnacl";
 
+import {ChatTypes} from "@/src/shared/types";
+
 class ChatData{
     public chatId: string | null;
     public chatType: string | null;
@@ -51,25 +53,28 @@ export class ChatSession{
     async initData(){
         let chatData;//Данные о типе чата получаем только если передан chatId
         const nowAccountId = await accountStorageService.getNowAccountId();
+        this.privatePreKey = await preKeyStorageService.getPrivateKey(nowAccountId || "") || null;//Получаем свой приватный ключ
         
         if(this.chatData.chatId){
             chatData = await chatFetchService.getChatData(this.chatData.chatId);
             this.chatData.chatType = chatData.chat_type;
 
             //Если тип чата оказался приватным, получаем id собеседника(если ранее не был получен)
-            if(chatData.chat_type === "private" && !this.chatData.readerId)
+            if(chatData.chat_type === ChatTypes.PRIVATE && !this.chatData.readerId)
                 this.chatData.readerId = JSON.parse(chatData.user_ids).filter((userId:string) => userId !== nowAccountId)[0];
         }
         
-        if(this.chatData.chatType === "private"){//Если пишем в личные сообщение
-            const publicKeys = await keyFetchService.getPublicKeys(this.chatData.readerId as string);
-            
-            this.publicIdentKey = toUint8Array(publicKeys.public_key);
-            this.publicPreKey = toUint8Array(publicKeys.pre_key);
-            this.signature = toUint8Array(publicKeys.signature);
+        switch(this.chatData.chatType){
+            case ChatTypes.PRIVATE:
+                const publicKeys = await keyFetchService.getPublicKeys(this.chatData.readerId as string);
+                this.publicIdentKey = toUint8Array(publicKeys.public_key);
+                this.publicPreKey = toUint8Array(publicKeys.pre_key);
+                this.signature = toUint8Array(publicKeys.signature);
+            break;
+            // case ChatTypes.GROUP:
+
+            // break;
         }
-        
-        this.privatePreKey = await preKeyStorageService.getPrivateKey(nowAccountId || "") || null;//Получаем свой приватный ключ
         
         const verifiedPreKey = nacl.sign.detached.verify(this.publicPreKey as Uint8Array, this.signature as Uint8Array, this.publicIdentKey as Uint8Array);
         if(!verifiedPreKey){

@@ -22,7 +22,6 @@ export async function loadUserData(){
         const verifyRefresh = await authService.verifyRefreshToken();//Проверяем, действительный ли токен
 
         return verifyRefresh;
-    }catch(error){
-        showError(error || "");
+    }catch{
     }
 }

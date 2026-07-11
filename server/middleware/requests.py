@@ -24,8 +24,7 @@ class BeforeRequestMiddleware():
                                    or request.cookies.get("ACCESS_TOKEN")#для браузера(куки httpOnly + lax/strict)
                                    or request.headers.get("Authorization")#для мобильного приложения
                                    or request.query_params.get("tempToken"))#для получения медиа(ТОКЕН ТОЛЬКО ДЛЯ МЕДИА)
-            print("\n", request.url.path, " ", request.state.token)
-            print(request.headers)
+            
             if request.url.path.startswith(API_PREFIX):
                 try:
                     if not request.state.token:
