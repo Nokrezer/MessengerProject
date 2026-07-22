@@ -18,8 +18,8 @@ class BeforeRequestMiddleware():
     def register(self, server):
         @server.middleware("http")
         async def before_request(request: Request, func):
-            #Получаем один из токенов от клиента
             
+            #Получаем один из токенов от клиента
             request.state.token = (request.cookies.get("REFRESH_TOKEN")#для браузера(куки httpOnly + lax/strict)
                                    or request.cookies.get("ACCESS_TOKEN")#для браузера(куки httpOnly + lax/strict)
                                    or request.headers.get("Authorization")#для мобильного приложения
@@ -49,6 +49,14 @@ class BeforeRequestMiddleware():
             
             #Передаём запрос в вызываемую функцию
             response = await func(request)
+
+            #если запрос для получения медиа
+            if request.url.path.replace(API_PREFIX, "") in media_requests:
+                #Заголовки для кэширования
+                response.headers["Cache-Control"] = "public, max-age=900, immutable"
+            # if "getTempToken" in request.url.path:
+            #     print(request.url.path)
+            #     response.headers["Cache-Control"] = f"private, max-age=50"
             
             return response
         

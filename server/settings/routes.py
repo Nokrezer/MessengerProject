@@ -51,7 +51,10 @@ class Routes():
                         RouteData(API_PREFIX + "getChatImage", self.api_controller.get_chat_image, ["GET"]),
                         RouteData(API_PREFIX + "getMediaMessage", self.api_controller.get_media_message, ["GET"]),
                         RouteData(API_PREFIX + "createGroupChat", self.api_controller.create_group_chat, ["POST"]),
-                        RouteData(API_PREFIX + "addMembers", self.api_controller.add_members, ["POST"])
+                        RouteData(API_PREFIX + "addMembers", self.api_controller.add_members, ["POST"]),
+                        RouteData(API_PREFIX + "deleteMessage", self.api_controller.delete_message, ["DELETE"]),
+                        RouteData(API_PREFIX + "editMessage", self.api_controller.edit_message, ["POST"]),
+                        RouteData(API_PREFIX + "getKeysByVersion", self.api_controller.get_keys_by_version, ["GETs"])
         ]
 
     def register(self):

@@ -35,8 +35,10 @@ async function loginSave(accessToken:string, refreshToken:string, onSuccess?:()=
         await identKeyStorageService.savePublicKey(identKeys.publicKey, userId);
         await preKeyStorageService.savePrivateKey(preKeys.secretKey, userId);
         await preKeyStorageService.savePublicKey(preKeys.publicKey, userId);
-        //Отправляем публичные ключи на сервер
-        await keyFetchService.sendPublicKeys(identKeys.publicKey, preKeys.publicKey, signature);
+        //Отправляем публичные ключи на сервер и получаем версию ключей
+        const publicKeyVersion = await keyFetchService.sendPublicKeys(identKeys.publicKey, preKeys.publicKey, signature);
+        //сохраняем на устройстве id ключей
+        await preKeyStorageService.savePublicKeyVersion(publicKeyVersion, userId);
       }
       
       //При успехе, если передана какая-либо логика

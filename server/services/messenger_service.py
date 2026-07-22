@@ -13,51 +13,42 @@ class MessengerService():
         
     #sender_id - id отправителя, reader_id - отправляет клиент, id пользователя которому отправляем соо
     #data - если передано любое медиа
-    async def send_message(self, text, message_type, nonce, sender_id, reader_id, chat_id, data):
+    async def send_message(self, text, message_type, nonce, sender_id, reader_id, chat_id, data, key_version):
         if reader_id:#Если передан id пользователя(получателя)(личный чат)
             chat_id = await self.chat_database.get_chat_by_members(sender_id, reader_id)
-            
-            if not chat_id:#Если чата не существует, создаём
-                chat_id = await self._create_private_chat(sender_id=sender_id, reader_id=reader_id)
-            else:
-                chat_id = chat_id.get("chat_id")
 
         elif not chat_id:
             raise NeedChatOrUserId()
         
         message_id = uuid.uuid4().hex
-        #Проверяем типы сообщений, если тип не текст, тогда сохраняем отправленный файл
-        if message_type == MessageTypes.VOICE:
-            await self.file_storage_service.save_voice_message(data, message_id)
+        #отправляем соо в режиме реального времени(если пользователи онлайн)
+        await self.messenger_realtime_service.send_message(chat_id, text, nonce, message_id, message_type, sender_id)
         
         await self.message_database.send_message(sender_id=sender_id, chat_id=chat_id,
                                                 text=text, nonce=nonce,
                                                 message_id=message_id,
-                                                message_type=message_type)#сохраняем сообщение в бд
-        #отправляем соо в режиме реального времени(если пользователи онлайн)
-        await self.messenger_realtime_service.send_message(chat_id, text, nonce, message_id, message_type, sender_id)
-
-        return chat_id
+                                                message_type=message_type,
+                                                key_version=key_version)#сохраняем сообщение в бд
+        
+        #Проверяем типы сообщений, если тип не текст, тогда сохраняем отправленный файл
+        match message_type:
+            case MessageTypes.VOICE:
+                await self.file_storage_service.save_voice_message(data, message_id)
     
     #Получение истории сообщений
     async def get_messages(self, user_id, chat_id, offset=0):
-        #получаем, имеет ли пользователь доступ к чату
-        access = await self.chat_database.check_user_access_to_chat(user_id, chat_id)
-        
-        if not access:
+        messages = await self.message_database.get_messages(chat_id, user_id, offset)
+        if not messages:#если none - либо нет сообщений, либо пользователь не имеет доступа к чату
             raise UserNotInChat()
         
-        return await self.message_database.get_messages(chat_id, offset)
+        return messages
     
     #Получение сообщения(медиа)
     async def get_media_message(self, user_id, message_id):
-        #проверяем, есть ли у пользователя доступ к сообщению
-        access = await self.chat_database.check_user_access_to_message(user_id, message_id)
-        if not access:
-            raise UserNotInChat()
-        
         #получаем тип сообщения по его id
-        message_type = (await self.message_database.get_message_type(message_id)).get("message_type")
+        message_type = (await self.message_database.get_message_type(user_id, message_id)).get("message_type")
+        if not message_type:#если none - пользователь не состоит в чате
+            raise UserNotInChat()
         
         media_bytes = None
         #проверяем какой тип сообщения и получаем сам медиа файл
@@ -69,3 +60,13 @@ class MessengerService():
                 raise UnknownMessageType()
 
         return media_bytes
+    
+    async def delete_message(self, message_id, user_id):
+        chat_id = (await self.chat_database.get_chat_id_by_message(message_id)).get("chat_id")
+        await self.messenger_realtime_service.delete_message(chat_id, message_id, user_id)
+        await self.message_database.delete_message(message_id, user_id)
+
+    async def edit_message(self, user_id, message_id, nonce, text):
+        chat_id = (await self.chat_database.get_chat_id_by_message(message_id)).get("chat_id")
+        await self.messenger_realtime_service.edit_message(chat_id, message_id, user_id, text, nonce)
+        await self.message_database.edit_message(user_id, message_id, nonce, text)

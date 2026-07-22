@@ -1,6 +1,5 @@
 import uvicorn
 
-
 #Конфигурация
 from settings.config import *
 #ядра сервера
@@ -20,6 +19,7 @@ from database.chat_database import ChatDatabase
 from database.message_database import MessageDatabase
 from database.key_database import KeyDatabase
 from database.members_database import MembersDatabase
+from database.log_database import LogDatabase
 
 #Сервисы
 from services.auth_service import AuthService
@@ -52,6 +52,7 @@ class ServiceContainer():
         self.chat_database = ChatDatabase(self.database)
         self.key_database = KeyDatabase(self.database)
         self.members_database = MembersDatabase(self.database)
+        self.log_database = LogDatabase(self.database)
 
         #все состояния для ядра реального времени
         self.realtime_state = RealTimeState()
@@ -96,9 +97,11 @@ class ServiceContainer():
                                             user_service=self.user_service,
                                             token_service=self.token_service,
                                             key_service=self.key_service,
-                                            chat_service=self.chat_service)
+                                            chat_service=self.chat_service,
+                                            log_database=self.log_database)
         self.auth_controller = AuthController(auth_service=self.auth_service,
-                                              token_service=self.token_service)
+                                              token_service=self.token_service,
+                                              log_database=self.log_database)
         
         #middleware
         self.serving_middleware = ServingMiddleware(self.database)
@@ -112,9 +115,11 @@ class RunServer():
         self.core = core
 
     def run_uvicorn(self):#обычный сервер(асинхронная обертка)
-        uvicorn.run(self.core.server, host=SERVER_IP, port=SERVER_PORT,
-                        ssl_keyfile=CERT_KEY if USE_CERTS else None,
-                        ssl_certfile=CERT if USE_CERTS else None)
+        uvicorn.run(self.core.server, 
+                    host=SERVER_IP, port=SERVER_PORT,
+                    ssl_keyfile=CERT_KEY if USE_CERTS else None,
+                    ssl_certfile=CERT if USE_CERTS else None,
+                    loop="uvloop")
 
 def main():
     container = ServiceContainer()

@@ -20,10 +20,14 @@ import {
   AudioPlayer
 } from 'expo-audio';
 import { authService } from "../services/fetchServices/authService";
+import { preKeyStorageService } from "../services/storageServices/preKeyStorageService";
 
 export const chatsSessions:Record<string, ChatSession> = {};//id чата/пользователя и объект сессии
 
 async function sendMessageHandler(messageType:string, text?:any, data?:any, chatId?:string, readerId?:string, setText?:Function | null, setChatId?:Function){
+    if(setText)
+        setText("");
+    
     let chatSession = chatsSessions[chatId as string];
     if(!chatSession){
         chatSession = new ChatSession(chatId, readerId);
@@ -38,9 +42,6 @@ async function sendMessageHandler(messageType:string, text?:any, data?:any, chat
     
     if(setChatId)
         setChatId(chatId);
-
-    if(setText)
-        setText("");
 
     if(readerId)
         chatsSessions[chatId as string] = chatSession;
@@ -75,14 +76,20 @@ async function getMediaMessage(message:{message_id:string, data:string, nonce:st
     
     const chatSession = chatsSessions[chatId];
     const decryptedMessage = await chatSession.getMessage(message);
-    const mediaBase64 = fromUint8Array(decryptedMessage.data as Uint8Array);
-    const audioUri = `data:audio/wav;base64,${mediaBase64}`;
-
-    return audioUri;
+    if(decryptedMessage && "data" in decryptedMessage && decryptedMessage.data){
+        const mediaBase64 = fromUint8Array(decryptedMessage.data as Uint8Array);
+        const audioUri = `data:audio/wav;base64,${mediaBase64}`;
+        return audioUri;
+    }
+    else
+        return;
 }
 
 export async function playAudioMessage(player:AudioPlayer, message:{message_id:string, data:string, nonce:string}, chatId:string){
     const audioUri = await getMediaMessage(message, chatId);
+    
+    if(!audioUri)
+        return;
 
     player.replace(audioUri);
     player.play();
@@ -90,7 +97,6 @@ export async function playAudioMessage(player:AudioPlayer, message:{message_id:s
 
 //для подгрузки истории сообщений при заходе в чат
 export async function getMessages(chatId:string){
-    // try{
         const history = await messageFetchService.getMessages(chatId);
 
         let chatSession = chatsSessions[chatId];
@@ -98,34 +104,53 @@ export async function getMessages(chatId:string){
             chatSession = new ChatSession(chatId);
             chatsSessions[chatId] = chatSession;
         }
-
+        
         await chatSession.initData();
         const userId = await accountStorageService.getNowAccountId();//Получаем id пользователя
+        const keyId = await preKeyStorageService.getPublicKeyId(userId as string);
         
-        for(const message of history){
-            const decryptedMessage = await chatSession.getMessage(message);
-            
-            message.text = decryptedMessage?.text;
-            message.isMyMessage = message.sender_id === userId;
-        }
-        
-        return history;
-    // }catch(error){
-    //    showError({error:error as Error});
-    // }
+        const decryptedHistory = await Promise.all(history.map(async (message:{message_type:string, sender_id:string,
+            text:string, message_id:string, nonce:string, key_id:string}) => {
+                //если ключ шифрования сообщения не равен ключу который сейчас у клиента
+                //задаём текст что сообщение не поддерживается
+                if(keyId !== message.key_id){
+                    return {
+                        message_id: message.message_id,
+                        display_info:"Сообщение недоступно",
+                        message_type:"info",
+                        is_my_message: message.sender_id === userId
+                    };
+                }
+                
+                return {
+                ...message,
+                text: (await chatSession.getMessage(message) as {text:string}).text,
+                is_my_message: message.sender_id === userId};
+        }));
+        alert(JSON.stringify(decryptedHistory));
+        return decryptedHistory;
 }
 
 //для расшифровки одного сообщения(для режима реал тайм)
-export async function getOneMessage(message:{text:string, message_type:string, isMyMessage:boolean, sender_id:string, data:string, nonce:string, message_id:string}, chatId:string){
+export async function getOneMessage(message:{text:string, message_type:string, is_my_message:boolean, sender_id:string, data:string, nonce:string, message_id:string}, chatId:string){
     const chatSession = chatsSessions[chatId];
 
-    
     const decryptedMessage = await chatSession.getMessage(message);
 
     const userId = await accountStorageService.getNowAccountId();//Получаем id пользователя
     
-    message["text"] = decryptedMessage["text"] as string;
-    message["isMyMessage"] = message.sender_id === userId;
+    message.text = decryptedMessage?.text as string;
+    message["is_my_message"] = message.sender_id === userId;
     
     return message;
+}
+
+export async function deleteMessageHandler(messageId:string){
+    await messageFetchService.deleteMessage(messageId);
+}
+
+export async function editMessageHandler(text:string, messageId:string, chatId:string, setText:Function){
+    setText("");
+    const chatSession = chatsSessions[chatId];
+    await chatSession.editMessage(text, messageId);
 }

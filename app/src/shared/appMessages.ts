@@ -7,6 +7,13 @@ export const showError = ({error, text}:{error?:Error, text?:string}) => {
   });
 };
 
+export const showErrorText = (text:string) => {
+  Toast.show({
+    type: 'error',
+    text1: text
+  });
+};
+
 export const showMessage = (text:string, name?:string) => {
     Toast.show({
         type: "info",

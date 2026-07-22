@@ -46,17 +46,21 @@ class ChatService():
         return await self.chat_database.get_user_chats(user_id)
     
     async def get_chat_data(self, chat_id, user_id):
-        await self._check_user_access_to_chat(user_id, chat_id)
+        chat_data = await self.chat_database.get_chat_data(chat_id, user_id)
+        if not chat_data:
+            raise UserNotInChat()
         
-        return await self.chat_database.get_chat_data(chat_id)
+        return chat_data
     
     async def get_chat_type(self, chat_id):
         return await self.chat_database.get_chat_type(chat_id)
     
     async def get_chat_members(self, chat_id, user_id):
-        await self._check_user_access_to_chat(user_id, chat_id)
+        chat_members = await self.members_database.get_chat_members(chat_id, user_id)
+        if not chat_members:
+            raise UserNotInChat()
 
-        return await self.members_database.get_chat_members(chat_id)
+        return chat_members
     
     async def get_chat_by_members(self, sender_id, reader_id):
         return await self.chat_database.get_chat_by_members(sender_id, reader_id)

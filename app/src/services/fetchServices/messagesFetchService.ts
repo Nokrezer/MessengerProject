@@ -1,8 +1,14 @@
 import { userApi } from "@/src/settings/config";
 import { authService } from "./authService";
+import { fetchService, FetchService } from "./fetchService";
 
 class MessagesFetchService{
-    async sendMessage(messageType:string, nonce:string, text?:string | null, data?:string | null, chatId?:string, readerId?:string){
+    private fetchService : FetchService;
+    constructor(fetchService:FetchService){
+        this.fetchService = fetchService;
+    }
+
+    async sendMessage(messageType:string, nonce:string, keyVersion:string, text?:string | null, data?:string | null, chatId?:string, readerId?:string){
         const form = new FormData();
         if(text)
             form.append("text", text);
@@ -11,50 +17,68 @@ class MessagesFetchService{
         form.append("nonce", nonce);
         form.append("message_type", messageType);
         form.append(chatId ? "chat_id" : "reader_id", chatId ?? readerId ?? "");
+        form.append("key_version", keyVersion);
 
-        const response = await fetch(userApi.sendMessage, {
+        await this.fetchService.fetch({request:userApi.sendMessage, 
             method:"POST",
             headers:{
                 Authorization: await authService.getAccessToken()
             },
             body:form
         });
-
-        if(!response.ok)
-            throw Error("Ошибка: " + await response.text());
-
-        return await response.text();
     }
 
     async getMessages(chatId?:string, readerId?:string){
         const toId = chatId ? "chatId=" + chatId : "readerId=" + readerId
-        const response = await fetch(userApi.getMessages + toId, {
+        const response = await this.fetchService.fetch({
+            request:userApi.getMessages + toId,
             method:"GET",
             headers:{
                 Authorization: await authService.getAccessToken()
             }
         });
 
-        if(!response.ok)
-            throw Error("Ошибка: " + await response.text());
-
-        return await response.json();
+        return response;
     }
 
     async getMediaMessage(messageId:string){
         const tempToken = await authService.getTempToken();
 
-        const response = await fetch(userApi.getMediaMessage + "messageId=" + messageId, {
+        const response = await this.fetchService.fetch({
+            request:userApi.getMediaMessage + "messageId=" + messageId,
             headers:{
                 Authorization: tempToken
             }
         });
 
-        if(!response.ok)
-            throw Error("Ошибка: " + await response.text());
+        return response.media;
+    }
 
-        return await response.text();
+    async editMessage(text:string, nonce:string, messageId:string){
+        const form = new FormData();
+        form.append("text", text);
+        form.append("nonce", nonce);
+        form.append("message_id", messageId);
+
+        await this.fetchService.fetch({
+            request:userApi.editMessage,
+            method:"POST",
+            body:form,
+            headers:{
+                Authorization: await authService.getAccessToken()
+            }
+        });
+    }
+
+    async deleteMessage(messageId:string){
+        await this.fetchService.fetch({
+            method:"DELETE",
+            request:userApi.deleteMessage + "messageId=" + messageId,
+            headers:{
+                Authorization: await authService.getAccessToken()
+            }
+        });
     }
 }
 
-export const messageFetchService = new MessagesFetchService();
+export const messageFetchService = new MessagesFetchService(fetchService);

@@ -17,7 +17,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // headerShown: true,
+        headerShown: true,
         tabBarButton: HapticTab,
       }}>
       <Tabs.Screen
@@ -39,14 +39,6 @@ export default function TabLayout() {
         options={{
           title: 'Профиль',
           headerShown: false,
-          tabBarIcon: ({ color }) => <Feather name="user" size={24} color={color} />
-        }}
-      />
-      <Tabs.Screen
-        name="test"
-        options={{
-          title: 'TEST',
-          headerShown: true,
           tabBarIcon: ({ color }) => <Feather name="user" size={24} color={color} />
         }}
       />

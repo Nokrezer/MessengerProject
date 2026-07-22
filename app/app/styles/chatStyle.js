@@ -13,12 +13,13 @@ export const chatStyles = StyleSheet.create({
         paddingLeft:5,
         paddingRight:5,
         height:40,
-        marginBottom:10
+        marginBottom:5
     },
     messagesView:{
-        height:"91%",
+        flex:1,
         width:"100%",
-        padding:10
+        padding:10,
+        marginBottom:5
     },
     myMessage:{
         textAlign:"right",
@@ -30,5 +31,28 @@ export const chatStyles = StyleSheet.create({
         borderRadius:5,
         alignSelf:"flex-start",
         marginBottom:10
+    },
+    messageMenu:{
+        position:"absolute", 
+        zIndex:100,
+        backgroundColor:"#445e54",
+        paddingTop:10,
+        paddingBottom:10,
+        borderRadius:"10%",
+        paddingLeft:10,
+        paddingRight:10
+    },
+    messageMenuText:{
+        fontSize:20,
+        marginLeft:10
+    },
+    messageMenuButton:{
+        paddingTop:4,
+        paddingBottom:4
+    },
+    aboveMenu:{
+        marginBottom:2,
+        paddingLeft:10,
+        paddingRight:10
     }
 });

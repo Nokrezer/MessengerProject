@@ -35,6 +35,18 @@ class PreKeyStorageService{
         }
     }
 
+    //Сохраняет на устройстве актуальную версию ключа
+    async savePublicKeyVersion(publicKeyVersion:string, userId:string){
+        if(Platform.OS !== "web")
+            await SecureStore.setItemAsync(`PublicPreKeyVersion_${userId}`, publicKeyVersion);
+    }
+
+    //Получает число, актуальная версия ключа
+    async getPublicKeyVersion(userId:string){
+        if(Platform.OS !== "web")
+            return await SecureStore.getItemAsync(`PublicPreKeyVersion_${userId}`);
+    }
+
     async getPublicKey(userId:string){
         if(Platform.OS !== "web"){
             const publicKey = await SecureStore.getItemAsync(`PublicPreKey_${userId}`);

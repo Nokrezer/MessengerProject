@@ -11,9 +11,10 @@ from settings.config import *
 from datetime import datetime, timedelta, timezone
 
 class AuthController():
-    def __init__(self, auth_service, token_service):
+    def __init__(self, auth_service, token_service, log_database):
         self.auth_service = auth_service
         self.token_service = token_service
+        self.log_database = log_database
 
     def _set_cookie_access(self, response, access_token):
         access_expires = (datetime.now() + timedelta(minutes=ACCESS_TOKEN_MINUTES)).astimezone(timezone.utc)
@@ -68,8 +69,9 @@ class AuthController():
         except IncorrectPassword:
             raise HTTPException(detail="Неверный пароль", status_code=403)
 
-        except Exception as e:
-            raise HTTPException(detail=str(e), status_code=400)
+        except Exception as error:
+            await self.log_database.add_error(request.url.path, error)
+            raise HTTPException(detail="Произошла ошибка", status_code=400)
         
     #Вход при помощи кода авторизации
     async def login_with_code(self, request:Request):
@@ -95,8 +97,9 @@ class AuthController():
         except AuthCodeExpired:
             raise HTTPException(detail="Срок действия кода истёк", status_code=401)
         
-        except Exception as e:
-            raise HTTPException(detail=str(e), status_code=400)
+        except Exception as error:
+            await self.log_database.add_error(request.url.path, error)
+            raise HTTPException(detail="Произошла ошибка", status_code=400)
         
     async def request_auth_code(self, request:Request):
         try:
@@ -108,8 +111,9 @@ class AuthController():
         except UserNotFound:
             raise HTTPException(detail="Аккаунт с такой почтой не найден", status_code=400)
         
-        except Exception as e:
-            raise HTTPException(detail=str(e), status_code=400)
+        except Exception as error:
+            await self.log_database.add_error(request.url.path, error)
+            raise HTTPException(detail="Произошла ошибка", status_code=400)
         
     async def request_reg_code(self, request:Request):
         try:
@@ -121,8 +125,9 @@ class AuthController():
         except UserWithEmailExist:
             raise HTTPException(detail="Почта уже зарегистрирована", status_code=400)
         
-        except Exception as e:
-            raise HTTPException(detail=str(e), status_code=400)
+        except Exception as error:
+            await self.log_database.add_error(request.url.path, error)
+            raise HTTPException(detail="Произошла ошибка", status_code=400)
     
     async def registration(self, request:Request):
         try:
@@ -144,8 +149,9 @@ class AuthController():
         except UserWithEmailExist:
             raise HTTPException(detail="Пользователь с такой почтой существует", status_code=409)
         
-        except Exception as e:
-            raise HTTPException(detail=str(e), status_code=400)
+        except Exception as error:
+            await self.log_database.add_error(request.url.path, error)
+            raise HTTPException(detail="Произошла ошибка", status_code=400)
         
     async def update_access_token(self, request: Request):
         try:
@@ -169,8 +175,9 @@ class AuthController():
         except TokenNotExists:
             raise HTTPException(detail="Токен не существует", status_code=401)
 
-        except Exception as e:
-            raise HTTPException(detail=str(e), status_code=400)
+        except Exception as error:
+            await self.log_database.add_error(request.url.path, error)
+            raise HTTPException(detail="Произошла ошибка", status_code=400)
         
     async def verify_refresh_token(self, request: Request):
         try:
@@ -186,8 +193,9 @@ class AuthController():
         except TokenNotExists:
             raise HTTPException(detail="Токен не существует", status_code=401)
 
-        except Exception as e:
-            raise HTTPException(detail=str(e), status_code=400)
+        except Exception as error:
+            await self.log_database.add_error(request.url.path, error)
+            raise HTTPException(detail="Произошла ошибка", status_code=400)
     
     async def verify_access_token(self, request: Request):
         try:
@@ -203,11 +211,13 @@ class AuthController():
         except TokenNotExists:
             raise HTTPException(detail="Токен не существует", status_code=401)
 
-        except Exception as e:
-            raise HTTPException(detail=str(e), status_code=400)
+        except Exception as error:
+            await self.log_database.add_error(request.url.path, error)
+            raise HTTPException(detail="Произошла ошибка", status_code=400)
         
     async def get_temp_token(self, request:Request):
         try:
             return {"TEMP_TOKEN": await self.token_service.get_temp_token(request.state.token)}
-        except Exception as e:
-            raise HTTPException(detail=str(e), status_code=400)
+        except Exception as error:
+            await self.log_database.add_error(request.url.path, error)
+            raise HTTPException(detail="Произошла ошибка", status_code=400)

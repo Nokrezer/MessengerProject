@@ -2,7 +2,7 @@ import {tokenStorageService} from "@/src/services/storageServices/tokenStorageSe
 import {accountStorageService} from "@/src/services/storageServices/accountStorageService";
 import {authService} from "@/src/services/fetchServices/authService";
 import { useState } from "react";
-import { showError } from "../shared/appMessages";
+import { showError, showErrorText } from "../shared/appMessages";
 import { chatStateStorageService } from "../services/storageServices/chatStateStorageService";
 
 //Функция для загрузки всех данных с прошлых сессий(если такие есть) при открытии приложения
@@ -19,9 +19,15 @@ export async function loadUserData(){
         //Передаём токен в сервис авторизации, для дальнейшей работы с ним
         authService.setRefreshToken(nowAccountToken);
         
-        const verifyRefresh = await authService.verifyRefreshToken();//Проверяем, действительный ли токен
-
-        return verifyRefresh;
+        // const verifyRefresh = await authService.verifyRefreshToken();//Проверяем, действительный ли токен
+        //обновляем токен доступа, если не получается обновить - тогда показываем страницу входа
+        try{
+            await authService.updateAccessToken();
+            return true;
+        }catch{
+            return false;
+        }
     }catch{
+        showErrorText("Не удалось войти в аккаунт");
     }
 }

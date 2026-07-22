@@ -40,7 +40,7 @@ export default function ProfilePage() {
   return (
     <SafeAreaView>
       <TouchableOpacity onPress={async () => setImageUrl(await onEditImageHandler() || imageUrl as string)}>
-        <Image source={{uri:imageUrl}} style={profileStyle.userImage}></Image>
+        <Image source={{uri:imageUrl, cacheKey:data.user_id}} style={profileStyle.userImage} cachePolicy="memory-disk"></Image>
       </TouchableOpacity>
       
       <View style={[globalStyles.block, profileStyle.block]}>

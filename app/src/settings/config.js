@@ -1,6 +1,6 @@
-const siteIp = "nokrezer.messenger.mooo.com:8000";
+const siteIp = "nokrezer.messenger.mooo.com:9000";
 export const apiUrl = `https://${siteIp}/`;
-export const websocketUrl = `ws://${siteIp}/ws`;
+export const websocketUrl = `wss://${siteIp}/ws`;
 const prefixApi = apiUrl + "api/";
 const prefixAuth = apiUrl + "auth/";
 
@@ -25,7 +25,10 @@ export const userApi = {
     setUserNickname: prefixApi + "setUserNickname",
     setUserBio: prefixApi + "setUserBio",
     getChatImage: prefixApi + "getChatImage?",
-    getMediaMessage: prefixApi + "getMediaMessage?"
+    getMediaMessage: prefixApi + "getMediaMessage?",
+    deleteMessage: prefixApi + "deleteMessage?",
+    editMessage: prefixApi + "editMessage",
+    getKeysByVersion: prefixApi + "getKeysByVersion?"
 };
 export const authApi = {
     registration: prefixAuth + "registration",

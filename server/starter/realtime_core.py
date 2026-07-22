@@ -16,6 +16,9 @@ class RealTimeCore():
         
     async def register_user(self, websocket:WebSocket):#регистрирует пользователя онлайн
         await websocket.accept()
+
+        user_id = None
+        chat_id = None
         
         while True:
             try:
@@ -25,7 +28,7 @@ class RealTimeCore():
                 #нам нужно только зарегестрировать пользователя, поэтому получаем только access token
                 if "ACCESS_TOKEN" in json_message:
                     token = json_message.get("ACCESS_TOKEN")
-                    user_id = (await self.token_service.verify_access_token(token))["user_id"]
+                    user_id = (await self.token_service.verify_access_token(token)).get("user_id")
 
                     self.realtime_state.authed_users[user_id] = websocket
                     
@@ -44,6 +47,10 @@ class RealTimeCore():
 
                 else:
                     await websocket.send_text("Ошибка регистрации")
-            except Exception as e:
-                await websocket.send_text("Ошибка регистрации")
+            except:
+                if user_id in self.realtime_state.authed_users:
+                    del self.realtime_state.authed_users[user_id]
+                if chat_id in self.realtime_state.active_chats:
+                    del self.realtime_state.active_chats[chat_id]
+                break
         

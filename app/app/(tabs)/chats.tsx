@@ -12,7 +12,6 @@ export default function ChatsPage() {
   //Получаем список чатов пользователя
   const {chats, loading} = useGetChats();
   // useRealTimeMessages();
-  
   if(loading)
     return <Text>Загрузка</Text>;
 

@@ -1,57 +1,54 @@
 import { authApi, userApi } from "@/src/settings/config";
 import { authService } from "./authService";
+import { fetchService, FetchService } from "./fetchService";
 
 class UserService{
+    private fetchService : FetchService;
+    constructor(fetchService:FetchService){
+        this.fetchService = fetchService;
+    }
+    
     async getIdByToken(accessToken: string){
-        const response = await fetch(userApi.getIdByToken, {
+        const response = await this.fetchService.fetch({
+            request:userApi.getIdByToken,
             method: "GET",
             headers:{"Authorization":accessToken}
         });
 
-        if(!response.ok)
-            throw Error("Ошибка", {cause: await response.json()})
-
-        return await response.json();
+        return response;
     }
 
     async getUsers(nickname:string){
-        const response = await fetch(userApi.getUsers + "nickname=" + nickname, {
+        const response = await this.fetchService.fetch({
+            request:userApi.getUsers + "nickname=" + nickname,
             headers:{
                 Authorization: await authService.getAccessToken()
             }
         });
 
-        if(!response.ok)
-            throw Error("Ошибка", {cause: await response.json()})
-
-        return await response.json();
+        return response;
     }
 
     async getPrivateData(){
-        const response = await fetch(userApi.getPrivateData, {
+        const response = await this.fetchService.fetch({
+            request:userApi.getPrivateData, 
             headers:{
                 Authorization: await authService.getAccessToken()
             }
         });
 
-        if(!response.ok)
-            throw Error("Ошибка", {cause: await response.json()})
-
-        return await response.json();
+        return response;
     }
 
     async getUserImage(userId:string){
-        const tempToken = await authService.getTempToken();
-        const response = await fetch(userApi.getUserImage + "userId=" + userId, {
+        const response = await this.fetchService.fetch({
+            request:userApi.getUserImage + "userId=" + userId,
             headers:{
-                Authorization: tempToken
+                Authorization: await authService.getTempToken()
             }
         });
 
-        if(!response.ok)
-            throw Error("Ошибка", {cause: await response.json()})
-
-        return await response.text();
+        return response;
     }
 
     async setUserImage(dir:string){
@@ -62,65 +59,57 @@ class UserService{
                     name: "image",
                 } as any);
         
-        const response = await fetch(userApi.setUserImage, {
+        await this.fetchService.fetch({
+            request:userApi.setUserImage,
             method:"POST",
             headers:{
                 Authorization: await authService.getAccessToken()
             },
             body: form
         });
-
-        if(!response.ok)
-            throw Error("Ошибка", {cause: await response.json()})
     }
 
     async setUserName(name:string){
         const form = new FormData();
         form.append("name", name);
         
-        const response = await fetch(userApi.setUserName, {
+        await this.fetchService.fetch({
+            request:userApi.setUserName,
             method:"POST",
             headers:{
                 Authorization: await authService.getAccessToken()
             },
             body: form
         });
-
-        if(!response.ok)
-            throw Error("Ошибка", {cause: await response.json()})
     }
 
     async setUserNickname(nickname:string){
         const form = new FormData();
         form.append("nickname", nickname);
         
-        const response = await fetch(userApi.setUserNickname, {
+        await this.fetchService.fetch({
+            request:userApi.setUserNickname,
             method:"POST",
             headers:{
                 Authorization: await authService.getAccessToken()
             },
             body: form
         });
-
-        if(!response.ok)
-            throw Error("Ошибка", {cause: await response.json()})
     }
 
     async setUserBio(bio:string){
         const form = new FormData();
         form.append("bio", bio);
         
-        const response = await fetch(userApi.setUserBio, {
+        await this.fetchService.fetch({
+            request:userApi.setUserBio,
             method:"POST",
             headers:{
                 Authorization: await authService.getAccessToken()
             },
             body: form
         });
-
-        if(!response.ok)
-            throw Error("Ошибка", {cause: await response.json()})
     }
 }
 
-export const userService = new UserService();
+export const userService = new UserService(fetchService);

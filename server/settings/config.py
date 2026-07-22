@@ -1,7 +1,7 @@
 from os import getenv
 
 SERVER_IP = "192.168.31.168"
-SERVER_PORT = 8000
+SERVER_PORT = 9000
 REALTIME_PORT = 8010
 #sql
 SQL_HOST = "127.0.0.1"
@@ -39,10 +39,10 @@ USER_BIO_PEPPER = getenv("USER_BIO_PEPPER")
 CHAT_IMAGE_PEPPER = getenv("CHAT_IMAGE_PEPPER")
 
 #расположение пользовательских данных(аватарки)
-USERS_DATA = "/home/nokrezer/Рабочий стол/MessengerProject/usersData/"
+USERS_DATA = "../usersData/"
 USERS_IMAGES = USERS_DATA + "usersImages/"
 #расположение данных чатов(голосовые сообщения, картинки и тд)
-CHATS_DATA = "/home/nokrezer/Рабочий стол/MessengerProject/chatsData/"
+CHATS_DATA = "../chatsData/"
 VOICE_MESSAGES = CHATS_DATA + "voiceMessages/"
 
 #Обрезка изображений
